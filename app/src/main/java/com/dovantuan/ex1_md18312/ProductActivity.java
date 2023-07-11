@@ -1,6 +1,7 @@
 package com.dovantuan.ex1_md18312;
 
 import androidx.appcompat.app.AppCompatActivity;
+
 import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
@@ -17,38 +18,42 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ProductActivity extends AppCompatActivity {
-    private EditText etProductName;
-    private EditText etProductPrice;
-    private EditText etProductCategory;
-    private Button btnAddProduct;
-    private ListView lvProductList;
+    EditText edt_name;
+    EditText edt_Price;
+    EditText edt_IdCat;
+    Button btnAddProduct;
+    ListView lvProductList;
 
-    private ProductAdapter productAdapter;
-    private List<ProductDTO> productList;
-    private ProductDAO productDAO;
+    ProductAdapter productAdapter;
+    List<ProductDTO> productList;
+    ProductDAO productDAO;
+
+    ProductDTO objCurrentProduct;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_product);
 
-        etProductName = findViewById(R.id.etProductName);
-        etProductPrice = findViewById(R.id.etProductPrice);
-        etProductCategory = findViewById(R.id.etProductCategory);
+        edt_name = findViewById(R.id.etProductName);
+        edt_Price = findViewById(R.id.etProductPrice);
+        edt_IdCat = findViewById(R.id.etProductCategory);
         btnAddProduct = findViewById(R.id.btnAddProduct);
         lvProductList = findViewById(R.id.lvProductList);
 
         productDAO = new ProductDAO(this);
-        productList = new ArrayList<>();
+        // tự động load danh sách khi vào activity
+        productList = productDAO.getAll();
         productAdapter = new ProductAdapter(this, productList);
+
         lvProductList.setAdapter(productAdapter);
 
         btnAddProduct.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String name = etProductName.getText().toString().trim();
-                String priceStr = etProductPrice.getText().toString().trim();
-                String categoryStr = etProductCategory.getText().toString().trim();
+                String name = edt_name.getText().toString().trim();
+                String priceStr = edt_Price.getText().toString().trim();
+                String categoryStr = edt_IdCat.getText().toString().trim();
 
                 if (name.isEmpty() || priceStr.isEmpty() || categoryStr.isEmpty()) {
                     Toast.makeText(ProductActivity.this, "Bạn chưa nhập thông tin", Toast.LENGTH_SHORT).show();
@@ -59,13 +64,23 @@ public class ProductActivity extends AppCompatActivity {
                 int categoryId = Integer.parseInt(categoryStr);
 
                 ProductDTO product = new ProductDTO(0, name, price, categoryId);
-                long result = productDAO.addRow(product);
+                long id = productDAO.addRow(product);
 
-                if (result != -1) {
-                    product.setId((int) result);
-                    productList.add(product);
+//                if (id != -1) {
+//                    product.setId((int) id);
+//                    productList.add(product);
+////                    productList.addAll(ProductDAO.getAll());
+//                    productAdapter.notifyDataSetChanged();
+//                    clearInputFields();
+//                    Toast.makeText(ProductActivity.this, "Thêm sản phẩm thành công", Toast.LENGTH_SHORT).show();
+//                } else {
+//                    Toast.makeText(ProductActivity.this, "Thêm sản phẩm thất bại", Toast.LENGTH_SHORT).show();
+//                }
+//            }
+                if (id > 0) {
+                    productList.clear();
+                    productList.addAll(productDAO.getAll());
                     productAdapter.notifyDataSetChanged();
-                    clearInputFields();
                     Toast.makeText(ProductActivity.this, "Thêm sản phẩm thành công", Toast.LENGTH_SHORT).show();
                 } else {
                     Toast.makeText(ProductActivity.this, "Thêm sản phẩm thất bại", Toast.LENGTH_SHORT).show();
@@ -73,26 +88,20 @@ public class ProductActivity extends AppCompatActivity {
             }
         });
 
-        lvProductList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        lvProductList.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                ProductDTO selectedProduct = productList.get(position);
-                Toast.makeText(ProductActivity.this, "Chọn sản phẩm: " + selectedProduct.getName(), Toast.LENGTH_SHORT).show();
+            public boolean onItemLongClick(AdapterView<?> adapterView, View view, int i, long l) {
+
+                objCurrentProduct = productList.get(i);
+                // đưa dữ liệu lên edittext
+                edt_name.setText( objCurrentProduct .getName());
+                edt_Price.setText(objCurrentProduct .getPrice());
+                edt_IdCat.setText(objCurrentProduct .getId_cat());
+
+                return true;
             }
         });
 
-        loadProductList();
-    }
 
-    private void loadProductList() {
-        productList.clear();
-        productList.addAll(productDAO.getAll());
-        productAdapter.notifyDataSetChanged();
-    }
-
-    private void clearInputFields() {
-        etProductName.setText("");
-        etProductPrice.setText("");
-        etProductCategory.setText("");
     }
 }
